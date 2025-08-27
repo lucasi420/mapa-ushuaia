@@ -8,21 +8,7 @@
   <style>
     body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
     #map { height: 600px; width: 100%; }
-
-    /* Título en el pie */
-    .map-title {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      color: #333;
-      background: rgba(255,255,255,0.7);
-      padding: 5px 0;
-      z-index: 1000;
-      border-radius: 6px;
-    }
+    h2 { text-align: center; margin: 10px 0; }
 
     /* Contenedor del buscador */
     .buscador {
@@ -73,6 +59,7 @@
   </style>
 </head>
 <body>
+  <h2>Mapa interactivo de Ushuaia</h2>
   <div id="map"></div>
 
   <!-- Buscador -->
@@ -90,9 +77,6 @@
   <div class="ubicacion">
     <button id="btnMiUbicacion">📍 Mi ubicación</button>
   </div>
-
-  <!-- Título en el pie -->
-  <div class="map-title">Super - Ushuaia</div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
