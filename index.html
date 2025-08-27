@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa de Ushuaia Mejorado</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <style>
+    #map { height: 600px; width: 100%; }
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    h2 { text-align: center; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h2>Mapa interactivo de Ushuaia</h2>
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    // Crear mapa centrado en Ushuaia
+    var map = L.map('map').setView([-54.81, -68.31], 13);
+
+    // Limites del mapa para que no se salga de Ushuaia
+    map.setMaxBounds([
+      [-54.85, -68.35], // esquina suroeste
+      [-54.78, -68.27]  // esquina noreste
+    ]);
+
+    // Capa base con nombres de calles más visibles (Carto Light)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Ícono personalizado
+    var customIcon = L.icon({
+      iconUrl: 'https://cdn-icons-png.flaticon.com/512/252/252025.png',
+      iconSize: [32, 32],
+      iconAnchor: [16, 32],
+      popupAnchor: [0, -32]
+    });
+
+    // Puntos de ejemplo
+    const puntos = [
+      { lat: -54.8019, lon: -68.3029, texto: "Nodo 1 - Zona centro" },
+      { lat: -54.8050, lon: -68.3100, texto: "Nodo 2 - Zona norte" },
+      { lat: -54.8075, lon: -68.3150, texto: "Nodo 3 - Zona sur" }
+    ];
+
+    // Agregar puntos al mapa
+    puntos.forEach(p => {
+      L.marker([p.lat, p.lon], {icon: customIcon})
+        .addTo(map)
+        .bindPopup(`<b>${p.texto}</b>`);
+    });
+  </script>
+</body>
+</html>
