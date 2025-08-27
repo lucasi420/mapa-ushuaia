@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>Mapa de Ushuaia Mejorado con Buscador</title>
+  <title>Mapa de Ushuaia Mejorado</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
   <style>
@@ -33,6 +33,29 @@
     .buscador button {
       cursor: pointer;
     }
+
+    /* Botón de mi ubicación */
+    .ubicacion {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+
+    .ubicacion button {
+      padding: 6px 10px;
+      font-size: 14px;
+      border-radius: 8px;
+      border: none;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .ubicacion button:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
@@ -48,6 +71,11 @@
       <option value="">Nap</option>
     </select>
     <button id="btnBuscar">🔍</button>
+  </div>
+
+  <!-- Botón de ubicación -->
+  <div class="ubicacion">
+    <button id="btnMiUbicacion">📍 Mi ubicación</button>
   </div>
 
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
@@ -111,13 +139,32 @@
       );
 
       if(encontrado){
-        map.setView([encontrado.lat, encontrado.lon], 17); // Zoom al marcador
+        map.setView([encontrado.lat, encontrado.lon], 17);
         encontrado.marker.openPopup();
       } else {
         alert("No se encontró la ubicación con esos parámetros.");
       }
     });
 
+    // Botón "Mi ubicación"
+    document.getElementById('btnMiUbicacion').addEventListener('click', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          pos => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+            map.setView([lat, lon], 17);
+            L.marker([lat, lon]).addTo(map)
+              .bindPopup("<b>Tu ubicación</b>").openPopup();
+          },
+          err => {
+            alert("No se pudo obtener tu ubicación.");
+          }
+        );
+      } else {
+        alert("Tu navegador no soporta geolocalización.");
+      }
+    });
   </script>
 </body>
 </html>
