@@ -1,35 +1,44 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mapa de Nodos y NAPs</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  select { padding: 5px 10px; margin: 0 10px 20px 0; }
-  #mapa { width: 100%; height: 400px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; border: 1px solid #999; }
-</style>
+    <title>Mapa de Nodos</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        #map { height: 90vh; width: 100%; }
+        #selector {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            z-index: 1000;
+            background: white;
+            padding: 5px;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
 
-<h2>Mapa de Nodos y NAPs</h2>
+<div id="selector">
+    <label for="nodoSelect">Seleccionar Nodo:</label>
+    <select id="nodoSelect">
+        <option value="">-- Elegir --</option>
+    </select>
+</div>
 
-<label for="selectNodo">Nodo:</label>
-<select id="selectNodo">
-  <option value="">Seleccione Nodo</option>
-</select>
+<div id="map"></div>
 
-<label for="selectNap">NAP:</label>
-<select id="selectNap">
-  <option value="">Seleccione NAP</option>
-</select>
-
-<div id="mapa">Aquí irá el mapa o imagen</div>
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-// Tu array de puntos (ejemplo)
-const puntos = [
-  { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
+    // Lista de puntos
+    const puntos = [
+       { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
 { lat: -54.808827, lon: -68.3184410446028, texto: "NODO001 - E02 (8)" },
 { lat: -54.8090586439286, lon: -68.318840526108, texto: "NODO001 - NAP03 (8)" },
 { lat: -54.8087289417673, lon: -68.3193319570909, texto: "NODO001 - NAP04 (16)" },
@@ -465,45 +474,43 @@ const puntos = [
 { lat: -54.7954667, lon: -68.2845260, texto: "NODO074 - NAP 02 (8)" },
 { lat: -54.7955506, lon: -68.2835075, texto: "NODO074 - NAP 03 (8)" },
 
-];
+    ];
 
-// Referencias a los selects
-const selectNodo = document.getElementById("selectNodo");
-const selectNap = document.getElementById("selectNap");
+    // Inicializar mapa centrado en Ushuaia
+    const map = L.map('map').setView([-54.815674, -68.337289], 14);
 
-// Obtener nodos únicos
-const nodosUnicos = [...new Set(puntos.map(p => p.texto.split(" - ")[0]))];
+    // Capa de mapa
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19
+    }).addTo(map);
 
-// Crear opciones de nodo
-nodosUnicos.forEach(nodo => {
-  const option = document.createElement("option");
-  option.value = nodo;
-  option.textContent = nodo;
-  selectNodo.appendChild(option);
-});
+    // Agregar marcadores y llenar el selector
+    const markers = {};
+    const nodoSelect = document.getElementById('nodoSelect');
 
-// Evento al cambiar nodo
-selectNodo.addEventListener("change", () => {
-  const nodoSeleccionado = selectNodo.value;
-  
-  // Limpiar NAPs
-  selectNap.innerHTML = '<option value="">Seleccione NAP</option>';
-  
-  if(nodoSeleccionado){
-    const naps = puntos
-      .filter(p => p.texto.startsWith(nodoSeleccionado + " -"))
-      .map(p => p.texto.split(" - ")[1]);
-    
-    // Evitar duplicados
-    [...new Set(naps)].forEach(nap => {
-      const option = document.createElement("option");
-      option.value = nap;
-      option.textContent = nap;
-      selectNap.appendChild(option);
+    puntos.forEach((p, index) => {
+        const marker = L.marker([p.lat, p.lon]).addTo(map)
+            .bindPopup(p.texto);
+
+        markers[p.texto] = marker;
+
+        const option = document.createElement('option');
+        option.value = p.texto;
+        option.textContent = p.texto;
+        nodoSelect.appendChild(option);
     });
-  }
-});
+
+    // Evento de selección
+    nodoSelect.addEventListener('change', () => {
+        const seleccionado = nodoSelect.value;
+        if(seleccionado && markers[seleccionado]){
+            const m = markers[seleccionado];
+            map.setView(m.getLatLng(), 17); // Centra el mapa en el nodo
+            m.openPopup(); // Abre popup
+        }
+    });
 </script>
 
 </body>
 </html>
+
