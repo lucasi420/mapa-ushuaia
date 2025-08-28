@@ -1,16 +1,14 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Mapa de Nodos</title>
+    <title>Mapa de Nodos y NAPs</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
     <style>
         #map { height: 90vh; width: 100%; }
-        #selector {
+        #controls {
             position: absolute;
             top: 10px;
             left: 50px;
@@ -19,24 +17,30 @@
             padding: 5px;
             border-radius: 5px;
         }
+        #buscar {
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
 
-<div id="selector">
-    <label for="nodoSelect">Seleccionar Nodo:</label>
+<div id="controls">
+    Nodo: 
     <select id="nodoSelect">
         <option value="">-- Elegir --</option>
     </select>
+    NAP:
+    <select id="napSelect">
+        <option value="">-- Elegir --</option>
+    </select>
+    <button id="buscar">🔍</button>
 </div>
 
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
-    // Lista de puntos
+    // Datos de ejemplo
     const puntos = [
        { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
 { lat: -54.808827, lon: -68.3184410446028, texto: "NODO001 - E02 (8)" },
@@ -476,37 +480,55 @@
 
     ];
 
-    // Inicializar mapa centrado en Ushuaia
     const map = L.map('map').setView([-54.815674, -68.337289], 14);
 
-    // Capa de mapa
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(map);
 
-    // Agregar marcadores y llenar el selector
+    // Crear marcadores
     const markers = {};
+    puntos.forEach(p => {
+        const marker = L.marker([p.lat, p.lon]).addTo(map).bindPopup(p.texto);
+        markers[`${p.nodo}-${p.nap}`] = marker;
+    });
+
     const nodoSelect = document.getElementById('nodoSelect');
+    const napSelect = document.getElementById('napSelect');
 
-    puntos.forEach((p, index) => {
-        const marker = L.marker([p.lat, p.lon]).addTo(map)
-            .bindPopup(p.texto);
-
-        markers[p.texto] = marker;
-
+    // Llenar select de NODOS únicos
+    const nodosUnicos = [...new Set(puntos.map(p => p.nodo))];
+    nodosUnicos.forEach(n => {
         const option = document.createElement('option');
-        option.value = p.texto;
-        option.textContent = p.texto;
+        option.value = n;
+        option.textContent = n;
         nodoSelect.appendChild(option);
     });
 
-    // Evento de selección
+    // Cuando se selecciona un nodo, llenar el select de NAPs correspondientes
     nodoSelect.addEventListener('change', () => {
-        const seleccionado = nodoSelect.value;
-        if(seleccionado && markers[seleccionado]){
-            const m = markers[seleccionado];
-            map.setView(m.getLatLng(), 17); // Centra el mapa en el nodo
-            m.openPopup(); // Abre popup
+        const nodoElegido = nodoSelect.value;
+        napSelect.innerHTML = '<option value="">-- Elegir --</option>'; // limpiar NAPs
+        if(nodoElegido){
+            const naps = puntos.filter(p => p.nodo === nodoElegido).map(p => p.nap);
+            naps.forEach(nap => {
+                const option = document.createElement('option');
+                option.value = nap;
+                option.textContent = nap;
+                napSelect.appendChild(option);
+            });
+        }
+    });
+
+    // Botón buscar: centra el mapa en el marcador seleccionado
+    document.getElementById('buscar').addEventListener('click', () => {
+        const nodo = nodoSelect.value;
+        const nap = napSelect.value;
+        if(nodo && nap){
+            const key = `${nodo}-${nap}`;
+            const marker = markers[key];
+            if(marker){
+                map.setView(marker.getLatLng(), 17);
+                marker.openPopup();
+            }
         }
     });
 </script>
