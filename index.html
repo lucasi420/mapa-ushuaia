@@ -10,7 +10,6 @@
     #map { height: 600px; width: 100%; }
     h2 { text-align: center; margin: 10px 0; }
 
-    /* Contenedor del buscador */
     .buscador {
       position: absolute;
       top: 10px;
@@ -30,11 +29,8 @@
       font-size: 14px;
     }
 
-    .buscador button {
-      cursor: pointer;
-    }
+    .buscador button { cursor: pointer; }
 
-    /* Botón de mi ubicación */
     .ubicacion {
       position: absolute;
       top: 10px;
@@ -53,16 +49,13 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     }
 
-    .ubicacion button:hover {
-      background: #0056b3;
-    }
+    .ubicacion button:hover { background: #0056b3; }
   </style>
 </head>
 <body>
   <div id="map"></div>
-<h2>SUPER - Ushuaia</h2>
+  <h2>SUPER - Ushuaia</h2>
 
-  <!-- Buscador -->
   <div class="buscador">
     <select id="selectNodo">
       <option value="">Nodo</option>
@@ -73,7 +66,6 @@
     <button id="btnBuscar">🔍</button>
   </div>
 
-  <!-- Botón de ubicación -->
   <div class="ubicacion">
     <button id="btnMiUbicacion">📍 Mi ubicación</button>
   </div>
@@ -81,12 +73,7 @@
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     // Crear mapa centrado en Ushuaia
-   var map = L.map('map', {
-  center: [-54.81, -68.31],
-  zoom: 13,
-  zoomControl: false // <--- esto quita los botones de zoom
-});
-
+    var map = L.map('map', { center: [-54.81, -68.31], zoom: 13, zoomControl: false });
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; CARTO',
@@ -94,7 +81,6 @@
       maxZoom: 19
     }).addTo(map);
 
-    // Ícono personalizado
     var customIcon = L.icon({
       iconUrl: 'https://cdn-icons-png.flaticon.com/512/252/252025.png',
       iconSize: [32, 32],
@@ -102,9 +88,8 @@
       popupAnchor: [0, -32]
     });
 
-    // Puntos de ejemplo
+    // Datos simplificados para ejemplo
     const puntos = [
-      { lat: -54.8088311590765, lon: -68.3179029264192, texto: "Nodo001 - Nap01 (16)" },
       { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
 { lat: -54.808827, lon: -68.3184410446028, texto: "NODO001 - E02 (8)" },
 { lat: -54.8090586439286, lon: -68.318840526108, texto: "NODO001 - NAP03 (8)" },
@@ -543,67 +528,60 @@
 
     ];
 
-    // Agregar puntos al mapa
+    // Crear marcadores y capas
     const markers = [];
     puntos.forEach(p => {
-      const marker = L.marker([p.lat, p.lon], {icon: customIcon})
-        .addTo(map)
-        .bindPopup(`<b>${p.texto}</b>`);
-      markers.push({...p, marker});
+      const marker = L.marker([p.lat, p.lon], { icon: customIcon }).bindPopup(p.texto);
+      marker.addTo(map);
+      markers.push({ marker, nodo: p.nodo, nap: p.nap });
     });
 
-    // Poblar selects
+    // Llenar selects automáticamente
     const selectNodo = document.getElementById('selectNodo');
     const selectNap = document.getElementById('selectNap');
 
     const nodosUnicos = [...new Set(puntos.map(p => p.nodo))];
-    const napsUnicos = [...new Set(puntos.map(p => p.nap))];
-
-    nodosUnicos.forEach(n => selectNodo.add(new Option(n, n)));
-    napsUnicos.forEach(n => selectNap.add(new Option(n, n)));
-
-    // Función de búsqueda
-    document.getElementById('btnBuscar').addEventListener('click', () => {
-      const nodoSel = selectNodo.value;
-      const napSel = selectNap.value;
-
-      const encontrado = markers.find(m =>
-        (nodoSel === "" || m.nodo === nodoSel) &&
-        (napSel === "" || m.nap === napSel)
-      );
-
-      if(encontrado){
-        map.setView([encontrado.lat, encontrado.lon], 17);
-        encontrado.marker.openPopup();
-      } else {
-        alert("No se encontró la ubicación con esos parámetros.");
-      }
+    nodosUnicos.forEach(n => {
+      const opt = document.createElement('option'); opt.value = n; opt.text = n;
+      selectNodo.appendChild(opt);
     });
 
-    // Botón "Mi ubicación"
+    selectNodo.addEventListener('change', () => {
+      selectNap.innerHTML = '<option value="">Nap</option>';
+      const nodoSeleccionado = selectNodo.value;
+      const naps = [...new Set(puntos.filter(p => p.nodo === nodoSeleccionado).map(p => p.nap))];
+      naps.forEach(nap => {
+        const opt = document.createElement('option'); opt.value = nap; opt.text = nap;
+        selectNap.appendChild(opt);
+      });
+    });
+
+    // Botón buscar
+    document.getElementById('btnBuscar').addEventListener('click', () => {
+      const nodo = selectNodo.value;
+      const nap = selectNap.value;
+      markers.forEach(m => {
+        if ((nodo && m.nodo !== nodo) || (nap && m.nap !== nap)) {
+          map.removeLayer(m.marker);
+        } else {
+          m.marker.addTo(map);
+          map.setView(m.marker.getLatLng(), 17);
+        }
+      });
+    });
+
+    // Botón mi ubicación
     document.getElementById('btnMiUbicacion').addEventListener('click', () => {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          pos => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
-            map.setView([lat, lon], 17);
-            L.marker([lat, lon]).addTo(map)
-              .bindPopup("<b>Tu ubicación</b>").openPopup();
-          },
-          err => {
-            alert("No se pudo obtener tu ubicación.");
-          }
-        );
-      } else {
-        alert("Tu navegador no soporta geolocalización.");
-      }
+      map.locate({ setView: true, maxZoom: 17 });
+    });
+
+    map.on('locationfound', e => {
+      L.circle(e.latlng, { radius: 20, color: 'blue' }).addTo(map);
+    });
+
+    map.on('locationerror', e => {
+      alert("No se pudo obtener la ubicación.");
     });
   </script>
 </body>
 </html>
-
-
-
-
-
