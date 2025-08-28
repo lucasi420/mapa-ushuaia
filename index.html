@@ -1,96 +1,35 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <title>Mapa de Ushuaia Mejorado</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    #map { height: 600px; width: 100%; }
-    h2 { text-align: center; margin: 10px 0; }
-
-    .buscador {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255,255,255,0.9);
-      padding: 8px 12px;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      z-index: 1000;
-      display: flex;
-      gap: 5px;
-      align-items: center;
-    }
-
-    .buscador select, .buscador button {
-      padding: 4px 6px;
-      font-size: 14px;
-    }
-
-    .buscador button { cursor: pointer; }
-
-    .ubicacion {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-    }
-
-    .ubicacion button {
-      padding: 6px 10px;
-      font-size: 14px;
-      border-radius: 8px;
-      border: none;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-    }
-
-    .ubicacion button:hover { background: #0056b3; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de Nodos y NAPs</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  select { padding: 5px 10px; margin: 0 10px 20px 0; }
+  #mapa { width: 100%; height: 400px; background: #e0e0e0; display: flex; justify-content: center; align-items: center; border: 1px solid #999; }
+</style>
 </head>
 <body>
-  <div id="map"></div>
-  <h2>SUPER - Ushuaia</h2>
 
-  <div class="buscador">
-    <select id="selectNodo">
-      <option value="">Nodo</option>
-    </select>
-    <select id="selectNap">
-      <option value="">Nap</option>
-    </select>
-    <button id="btnBuscar">🔍</button>
-  </div>
+<h2>Mapa de Nodos y NAPs</h2>
 
-  <div class="ubicacion">
-    <button id="btnMiUbicacion">📍 Mi ubicación</button>
-  </div>
+<label for="selectNodo">Nodo:</label>
+<select id="selectNodo">
+  <option value="">Seleccione Nodo</option>
+</select>
 
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script>
-    // Crear mapa centrado en Ushuaia
-    var map = L.map('map', { center: [-54.81, -68.31], zoom: 13, zoomControl: false });
+<label for="selectNap">NAP:</label>
+<select id="selectNap">
+  <option value="">Seleccione NAP</option>
+</select>
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> &copy; CARTO',
-      subdomains: 'abcd',
-      maxZoom: 19
-    }).addTo(map);
+<div id="mapa">Aquí irá el mapa o imagen</div>
 
-    var customIcon = L.icon({
-      iconUrl: 'https://cdn-icons-png.flaticon.com/512/252/252025.png',
-      iconSize: [32, 32],
-      iconAnchor: [16, 32],
-      popupAnchor: [0, -32]
-    });
-
-    // Datos simplificados para ejemplo
-    const puntos = [
-      { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
+<script>
+// Tu array de puntos (ejemplo)
+const puntos = [
+  { lat: -54.8088311590765, lon: -68.3179029264192, texto: "NODO001 - NAP01 (16)" },
 { lat: -54.808827, lon: -68.3184410446028, texto: "NODO001 - E02 (8)" },
 { lat: -54.8090586439286, lon: -68.318840526108, texto: "NODO001 - NAP03 (8)" },
 { lat: -54.8087289417673, lon: -68.3193319570909, texto: "NODO001 - NAP04 (16)" },
@@ -526,62 +465,45 @@
 { lat: -54.7954667, lon: -68.2845260, texto: "NODO074 - NAP 02 (8)" },
 { lat: -54.7955506, lon: -68.2835075, texto: "NODO074 - NAP 03 (8)" },
 
-    ];
+];
 
-    // Crear marcadores y capas
-    const markers = [];
-    puntos.forEach(p => {
-      const marker = L.marker([p.lat, p.lon], { icon: customIcon }).bindPopup(p.texto);
-      marker.addTo(map);
-      markers.push({ marker, nodo: p.nodo, nap: p.nap });
+// Referencias a los selects
+const selectNodo = document.getElementById("selectNodo");
+const selectNap = document.getElementById("selectNap");
+
+// Obtener nodos únicos
+const nodosUnicos = [...new Set(puntos.map(p => p.texto.split(" - ")[0]))];
+
+// Crear opciones de nodo
+nodosUnicos.forEach(nodo => {
+  const option = document.createElement("option");
+  option.value = nodo;
+  option.textContent = nodo;
+  selectNodo.appendChild(option);
+});
+
+// Evento al cambiar nodo
+selectNodo.addEventListener("change", () => {
+  const nodoSeleccionado = selectNodo.value;
+  
+  // Limpiar NAPs
+  selectNap.innerHTML = '<option value="">Seleccione NAP</option>';
+  
+  if(nodoSeleccionado){
+    const naps = puntos
+      .filter(p => p.texto.startsWith(nodoSeleccionado + " -"))
+      .map(p => p.texto.split(" - ")[1]);
+    
+    // Evitar duplicados
+    [...new Set(naps)].forEach(nap => {
+      const option = document.createElement("option");
+      option.value = nap;
+      option.textContent = nap;
+      selectNap.appendChild(option);
     });
+  }
+});
+</script>
 
-    // Llenar selects automáticamente
-    const selectNodo = document.getElementById('selectNodo');
-    const selectNap = document.getElementById('selectNap');
-
-    const nodosUnicos = [...new Set(puntos.map(p => p.nodo))];
-    nodosUnicos.forEach(n => {
-      const opt = document.createElement('option'); opt.value = n; opt.text = n;
-      selectNodo.appendChild(opt);
-    });
-
-    selectNodo.addEventListener('change', () => {
-      selectNap.innerHTML = '<option value="">Nap</option>';
-      const nodoSeleccionado = selectNodo.value;
-      const naps = [...new Set(puntos.filter(p => p.nodo === nodoSeleccionado).map(p => p.nap))];
-      naps.forEach(nap => {
-        const opt = document.createElement('option'); opt.value = nap; opt.text = nap;
-        selectNap.appendChild(opt);
-      });
-    });
-
-    // Botón buscar
-    document.getElementById('btnBuscar').addEventListener('click', () => {
-      const nodo = selectNodo.value;
-      const nap = selectNap.value;
-      markers.forEach(m => {
-        if ((nodo && m.nodo !== nodo) || (nap && m.nap !== nap)) {
-          map.removeLayer(m.marker);
-        } else {
-          m.marker.addTo(map);
-          map.setView(m.marker.getLatLng(), 17);
-        }
-      });
-    });
-
-    // Botón mi ubicación
-    document.getElementById('btnMiUbicacion').addEventListener('click', () => {
-      map.locate({ setView: true, maxZoom: 17 });
-    });
-
-    map.on('locationfound', e => {
-      L.circle(e.latlng, { radius: 20, color: 'blue' }).addTo(map);
-    });
-
-    map.on('locationerror', e => {
-      alert("No se pudo obtener la ubicación.");
-    });
-  </script>
 </body>
 </html>
